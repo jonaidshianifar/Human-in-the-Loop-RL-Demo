@@ -6,8 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #0b1120;
-      --bg-elevated: #020617;
+      --bg: #020617;
       --card-bg: #020617;
       --card-border: #1f2937;
       --text: #e5e7eb;
@@ -25,7 +24,6 @@
 
     [data-theme="light"] {
       --bg: #f5f5f5;
-      --bg-elevated: #f9fafb;
       --card-bg: #ffffff;
       --card-border: #e5e7eb;
       --text: #111827;
@@ -47,7 +45,7 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
       padding: 0;
-      background: radial-gradient(circle at top left, #1d283a, var(--bg));
+      background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
@@ -86,6 +84,8 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     main {
@@ -105,20 +105,26 @@
       border: 1px solid var(--card-border);
     }
 
+    /* order for vertical layout: main game at top, then q-card, then params */
+    #env-card { order: 0; }
+    #q-card { order: 1; }
+    #params-card { order: 2; }
+
     #env-card {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 10px;
-      order: 1;
     }
 
-    #q-card {
-      order: 2;
-    }
-
-    #params-card {
-      order: 3;
+    #q-card h2,
+    #params-card h2 {
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
     }
 
     .cards-right {
@@ -161,7 +167,8 @@
       justify-content: center;
     }
 
-    button {
+    button,
+    .header-link-btn {
       padding: 7px 13px;
       border-radius: 999px;
       border: 1px solid transparent;
@@ -177,6 +184,27 @@
       transform: scale(0.97);
     }
 
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .header-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      border-color: var(--accent-soft);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .header-link-btn:hover {
+      background: rgba(15,23,42,1);
+    }
+
     #nextActionBtn {
       background: linear-gradient(135deg, var(--accent), #22c55e);
       color: white;
@@ -190,13 +218,16 @@
       transform: translateY(-1px);
     }
 
-    #resetBtn {
+    #resetBtn,
+    #runPolicyBtn {
       border-color: var(--accent-soft);
       background: rgba(15,23,42,0.7);
       color: var(--text-muted);
+      white-space: nowrap;
     }
 
-    #resetBtn:hover {
+    #resetBtn:hover,
+    #runPolicyBtn:hover {
       background: rgba(15,23,42,0.95);
     }
 
@@ -243,16 +274,6 @@
       color: var(--text-muted);
       text-align: center;
       min-height: 1.2em;
-    }
-
-    #params-card h2,
-    #q-card h2 {
-      margin-top: 0;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--text-muted);
     }
 
     #params-card {
@@ -315,8 +336,16 @@
       text-align: right;
     }
 
-    #themeToggle,
-    #helpBtn {
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    #themeToggle {
       border-color: var(--accent-soft);
       background: rgba(15,23,42,0.9);
       color: var(--text-muted);
@@ -324,15 +353,11 @@
       align-items: center;
       gap: 6px;
       padding-inline: 10px;
-    }
-
-    #themeToggle span,
-    #helpBtn span {
-      font-size: 0.78rem;
-    }
-
-    #helpBtn {
       white-space: nowrap;
+    }
+
+    #themeToggle span {
+      font-size: 0.78rem;
     }
 
     /* Modal */
@@ -399,8 +424,10 @@
 
     .modal-footer {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       margin-top: 8px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .primary-btn {
@@ -410,6 +437,23 @@
       box-shadow: 0 8px 24px rgba(59,130,246,0.45);
       font-size: 0.85rem;
       padding-inline: 14px;
+    }
+
+    .secondary-btn-link {
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      padding: 6px 12px;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      background: rgba(15,23,42,0.85);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .secondary-btn-link:hover {
+      background: rgba(15,23,42,1);
     }
 
     .hidden {
@@ -455,10 +499,6 @@
       .button-row {
         justify-content: center;
       }
-
-      body {
-        background: radial-gradient(circle at top, #111827, var(--bg));
-      }
     }
   </style>
 </head>
@@ -474,6 +514,9 @@
       <button id="helpBtn" type="button">
         <span>❔</span><span>How it works</span>
       </button>
+      <a href="index.php" class="header-link-btn">
+        <span>📘</span><span>RL basics page</span>
+      </a>
       <button id="themeToggle" type="button">
         <span id="themeIcon">🌙</span>
         <span id="themeLabel">Dark</span>
@@ -482,7 +525,7 @@
   </header>
 
   <main>
-    <!-- MAIN PANEL (top) -->
+    <!-- MAIN GAME PANEL -->
     <section class="card" id="env-card">
       <div id="canvas-wrapper">
         <canvas id="grid"></canvas>
@@ -492,6 +535,7 @@
         <div class="button-row">
           <button id="nextActionBtn">Next Action (Agent Move)</button>
           <button id="resetBtn">Reset Agent</button>
+          <button id="runPolicyBtn">Test Learned Policy</button>
         </div>
 
         <div class="button-row" id="rewardButtons">
@@ -504,7 +548,7 @@
       </div>
     </section>
 
-    <!-- RIGHT COLUMN: Q-values in the middle, parameters at bottom -->
+    <!-- RIGHT COLUMN: Q-values (middle) + parameters (bottom) -->
     <div class="cards-right">
       <section class="card" id="q-card">
         <h2>Q-values (current state)</h2>
@@ -539,7 +583,7 @@
   </main>
 
   <footer>
-    Single <code>index.html</code>. Drop into a GitHub repo and enable GitHub Pages to run it.
+    Made by <a href="https://github.com/jonaidshianifar" target="_blank" rel="noopener noreferrer">Jonaid Shianifar</a>.
   </footer>
 
   <!-- HOW IT WORKS MODAL -->
@@ -575,6 +619,9 @@
         </p>
       </div>
       <div class="modal-footer">
+        <a href="index.php" class="secondary-btn-link">
+          <span>📘</span><span>Go to RL basics page</span>
+        </a>
         <button class="primary-btn" type="button" id="modalStartBtn">Got it, start!</button>
       </div>
     </div>
@@ -633,7 +680,6 @@
       localStorage.setItem("humanRewardRL_seenModal", "true");
     }
 
-    // open on first visit
     (function initModal() {
       const seen = localStorage.getItem("humanRewardRL_seenModal");
       if (!seen) {
@@ -658,6 +704,7 @@
 
     const nextActionBtn = document.getElementById("nextActionBtn");
     const resetBtn = document.getElementById("resetBtn");
+    const runPolicyBtn = document.getElementById("runPolicyBtn");
     const rewardButtons = document.querySelectorAll("#rewardButtons button");
 
     const gridSizeSlider = document.getElementById("gridSize");
@@ -676,6 +723,9 @@
     let waitingForReward = false;
     let lastStateIndex = null;
     let lastAction = null;
+
+    let isRunningPolicyDemo = false;
+    let demoInterval = null;
 
     function getAlpha() { return parseFloat(alphaInput.value) || 0.2; }
     function getGamma() { return parseFloat(gammaInput.value) || 0.9; }
@@ -764,21 +814,25 @@
       qValuesEl.innerHTML = html;
     }
 
+    function greedyAction(sIdx) {
+      const qs = Q[sIdx];
+      let bestA = 0;
+      let bestQ = qs[0];
+      for (let a = 1; a < numActions; a++) {
+        if (qs[a] > bestQ) {
+          bestQ = qs[a];
+          bestA = a;
+        }
+      }
+      return bestA;
+    }
+
     function chooseAction(sIdx) {
       const eps = getEpsilon();
       if (Math.random() < eps) {
         return Math.floor(Math.random() * numActions);
       } else {
-        const qs = Q[sIdx];
-        let bestA = 0;
-        let bestQ = qs[0];
-        for (let a = 1; a < numActions; a++) {
-          if (qs[a] > bestQ) {
-            bestQ = qs[a];
-            bestA = a;
-          }
-        }
-        return bestA;
+        return greedyAction(sIdx);
       }
     }
 
@@ -820,8 +874,55 @@
       setStatus(`Applied reward ${reward.toFixed(2)}. Q updated. Click 'Next Action' again.`);
     }
 
+    function setButtonsDisabled(disabled) {
+      nextActionBtn.disabled = disabled;
+      resetBtn.disabled = disabled;
+      runPolicyBtn.disabled = disabled;
+      rewardButtons.forEach(btn => { btn.disabled = disabled; });
+    }
+
+    function runPolicyDemo() {
+      if (isRunningPolicyDemo) return;
+
+      // stop any pending reward state
+      waitingForReward = false;
+      lastStateIndex = null;
+      lastAction = null;
+
+      // reset position but keep Q-table
+      state = { x: 0, y: 0 };
+      render();
+      updateQValuesDisplay();
+
+      isRunningPolicyDemo = true;
+      setButtonsDisabled(true);
+      setStatus("Running policy demo with greedy actions...");
+
+      let steps = 0;
+      const maxSteps = N * N * 2; // simple bound
+
+      demoInterval = setInterval(() => {
+        const sIdx = stateToIndex(state);
+        const action = greedyAction(sIdx);
+        stepEnvironment(action);
+        render();
+        updateQValuesDisplay();
+
+        steps++;
+        if (steps >= maxSteps) {
+          clearInterval(demoInterval);
+          demoInterval = null;
+          isRunningPolicyDemo = false;
+          setButtonsDisabled(false);
+          setStatus(`Policy demo finished (${steps} steps). You can continue training.`);
+        }
+      }, 200);
+    }
+
     // Events
     nextActionBtn.addEventListener("click", () => {
+      if (isRunningPolicyDemo) return;
+
       if (waitingForReward) {
         setStatus("Please give a reward for the last action before continuing.");
         return;
@@ -842,16 +943,26 @@
       waitingForReward = true;
     });
 
-    resetBtn.addEventListener("click", resetAgent);
+    resetBtn.addEventListener("click", () => {
+      if (isRunningPolicyDemo) return;
+      resetAgent();
+    });
+
+    runPolicyBtn.addEventListener("click", () => {
+      if (isRunningPolicyDemo) return;
+      runPolicyDemo();
+    });
 
     rewardButtons.forEach(btn => {
       btn.addEventListener("click", () => {
+        if (isRunningPolicyDemo) return;
         const r = parseFloat(btn.dataset.reward);
         applyReward(r);
       });
     });
 
     gridSizeSlider.addEventListener("input", () => {
+      if (isRunningPolicyDemo) return;
       N = parseInt(gridSizeSlider.value, 10);
       gridSizeLabel.textContent = N.toString();
       initQTable();
@@ -862,6 +973,7 @@
 
     [alphaInput, gammaInput, epsilonInput].forEach(input => {
       input.addEventListener("change", () => {
+        if (isRunningPolicyDemo) return;
         setStatus(`Updated parameters: α=${getAlpha()}, γ=${getGamma()}, ε=${getEpsilon()}.`);
       });
     });
