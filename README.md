@@ -42,13 +42,20 @@ You shape the reward → you shape the policy.
 Watch:
 - Q-values change  
 - Policy improve  
-- Exploration vs exploitation  
+- Exploration vs exploitation
+
+### 🧭 Policy Test Mode
+
+- After training, click "Test Learned Policy".
+- Agent resets and runs one full trajectory using only its learned greedy policy.
+- Great for observing how well the agent actually learned from your rewards.
 
 ### 🎚 Adjustable RL Parameters  
 Change and experiment with:
-- **Alpha** (learning rate)  
-- **Gamma** (discount)  
-- **Epsilon** (exploration)
+- **Grid size** (3×3 to 8×8)
+- **Alpha (α)** (learning rate)  
+- **Gamma (γ)** (discount)  
+- **Epsilon (ε)** (exploration)
 
 ### 📘 RL Basics Page (`rl.html`)  
 Clear explanations of:
