@@ -4,11 +4,51 @@
   <meta charset="UTF-8" />
   <title>Human-Reward Q-Learning Demo</title>
   <style>
+    :root {
+      --bg: #0b1120;
+      --bg-elevated: #020617;
+      --card-bg: #020617;
+      --card-border: #1f2937;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59,130,246,0.2);
+      --danger: #ef4444;
+      --success: #22c55e;
+      --neutral: #4b5563;
+      --grid-line: #1f2937;
+      --shadow: 0 18px 40px rgba(15,23,42,0.9);
+      --card-radius: 14px;
+      --transition-fast: 0.2s ease;
+    }
+
+    /* Light mode vars override when data-theme="light" */
+    [data-theme="light"] {
+      --bg: #f5f5f5;
+      --bg-elevated: #f9fafb;
+      --card-bg: #ffffff;
+      --card-border: #e5e7eb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: rgba(37,99,235,0.12);
+      --danger: #ef4444;
+      --success: #16a34a;
+      --neutral: #6b7280;
+      --grid-line: #e5e7eb;
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
       padding: 0;
-      background: #f5f5f5;
+      background: radial-gradient(circle at top left, #1d283a, var(--bg));
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -17,247 +57,455 @@
 
     header {
       padding: 16px;
-      text-align: center;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
     h1 {
       margin: 0;
-      font-size: 1.6rem;
+      font-size: clamp(1.3rem, 2vw, 1.7rem);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
     }
 
     main {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
       gap: 24px;
-      padding: 16px;
-      max-width: 1000px;
+      padding: 0 16px 16px;
+      max-width: 1100px;
       width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
+    }
+
+    .cards-right {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .card {
-      background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      padding: 16px;
-      box-sizing: border-box;
+      background: radial-gradient(circle at top left, rgba(148,163,184,0.08), var(--card-bg));
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 16px 18px;
+      border: 1px solid var(--card-border);
     }
 
     #env-card {
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 12px;
+    }
+
+    #canvas-wrapper {
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: radial-gradient(circle at top left, #1d293b, #020617);
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #grid {
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      margin-bottom: 12px;
-      background: #fafafa;
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     #controls {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
       width: 100%;
     }
 
-    #controls button {
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    button {
       padding: 8px 14px;
-      border-radius: 4px;
-      border: none;
+      border-radius: 999px;
+      border: 1px solid transparent;
       cursor: pointer;
       font-size: 0.9rem;
+      font-weight: 500;
+      background: transparent;
+      color: var(--text);
+      transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+    }
+
+    button:active {
+      transform: scale(0.97);
     }
 
     #nextActionBtn {
-      background: #2563eb;
+      background: linear-gradient(135deg, var(--accent), #22c55e);
       color: white;
+      border-color: transparent;
+      box-shadow: 0 10px 30px rgba(59,130,246,0.4);
+      white-space: nowrap;
+    }
+
+    #nextActionBtn:hover {
+      box-shadow: 0 15px 40px rgba(59,130,246,0.6);
+      transform: translateY(-1px);
     }
 
     #resetBtn {
-      background: #6b7280;
-      color: white;
+      border-color: var(--accent-soft);
+      background: rgba(15,23,42,0.7);
+      color: var(--text-muted);
     }
 
-    #rewardButtons {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
+    #resetBtn:hover {
+      background: rgba(15,23,42,0.95);
     }
 
     #rewardButtons button {
+      font-size: 0.8rem;
       padding: 6px 10px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.85rem;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
     }
 
     .reward-good {
-      background: #16a34a;
-      color: white;
+      background: rgba(34,197,94,0.12);
+      color: var(--success);
+      border-color: rgba(34,197,94,0.4);
+    }
+    .reward-good:hover {
+      background: rgba(34,197,94,0.2);
     }
 
     .reward-neutral {
-      background: #d1d5db;
-      color: #111827;
+      background: rgba(148,163,184,0.12);
+      color: var(--neutral);
+      border-color: rgba(148,163,184,0.4);
+    }
+    .reward-neutral:hover {
+      background: rgba(148,163,184,0.2);
     }
 
     .reward-bad {
-      background: #ef4444;
-      color: white;
+      background: rgba(239,68,68,0.1);
+      color: var(--danger);
+      border-color: rgba(239,68,68,0.5);
+    }
+    .reward-bad:hover {
+      background: rgba(239,68,68,0.18);
     }
 
     #status {
-      margin-top: 6px;
-      font-size: 0.85rem;
-      color: #374151;
+      margin-top: 4px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
       text-align: center;
-      min-height: 1.2em;
+      min-height: 1.3em;
+    }
+
+    #params-card h2,
+    #info-card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
     }
 
     #params-card {
-      min-width: 260px;
-      max-width: 320px;
+      font-size: 0.86rem;
     }
 
     #params-card label {
       display: flex;
       justify-content: space-between;
-      font-size: 0.85rem;
+      align-items: center;
+      font-size: 0.82rem;
       margin-bottom: 4px;
+      color: var(--text-muted);
     }
 
     #params-card input[type="number"],
     #params-card input[type="range"] {
       width: 100%;
       margin-bottom: 10px;
+      background: transparent;
+      color: var(--text);
     }
 
-    #info-card {
-      min-width: 260px;
-      max-width: 320px;
-      font-size: 0.85rem;
-      line-height: 1.4;
+    #params-card input[type="number"] {
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      padding: 4px 8px;
+      background: rgba(15,23,42,0.7);
+    }
+
+    #params-card input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+    }
+
+    #params-card input[type="range"] {
+      accent-color: var(--accent);
     }
 
     #q-values {
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 0.8rem;
-      max-height: 180px;
+      max-height: 160px;
       overflow-y: auto;
-      background: #f9fafb;
+      background: radial-gradient(circle at top left, rgba(148,163,184,0.14), rgba(15,23,42,0.8));
+      border-radius: 8px;
+      padding: 6px 8px;
+      border: 1px solid var(--card-border);
+      margin-top: 6px;
+      color: var(--text-muted);
+    }
+
+    #info-card {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--text-muted);
+    }
+
+    #info-card ol {
+      padding-left: 1.1rem;
+    }
+
+    #info-card li {
+      margin-bottom: 4px;
+    }
+
+    code {
+      background: rgba(15,23,42,0.6);
       border-radius: 4px;
-      padding: 6px;
-      border: 1px solid #e5e7eb;
-      margin-top: 8px;
+      padding: 0 4px;
+      font-size: 0.8rem;
     }
 
     footer {
       font-size: 0.75rem;
-      color: #6b7280;
-      padding: 8px 0 16px 0;
+      color: var(--text-muted);
+      padding: 10px 16px 18px;
+      width: 100%;
+      max-width: 1100px;
+      text-align: right;
     }
 
-    @media (max-width: 800px) {
+    /* Theme toggle */
+    #themeToggle {
+      border-color: var(--accent-soft);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-inline: 10px;
+    }
+
+    #themeToggle span {
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 900px) {
       main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      header {
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
+      }
+
+      footer {
+        text-align: left;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 12px 12px;
+      }
+
+      #canvas-wrapper {
+        padding: 6px;
+      }
+
+      .button-row {
+        justify-content: center;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Human-Reward Q-Learning Demo</h1>
-    <div style="font-size:0.9rem;color:#4b5563;">
-      Agent chooses an action. You choose the reward. The policy learns from you.
+    <div class="title-block">
+      <h1>Human-Reward Q-Learning Demo</h1>
+      <div class="subtitle">
+        Agent chooses an action. You choose the reward. The policy learns from you.
+      </div>
     </div>
+    <button id="themeToggle" type="button">
+      <span id="themeIcon">🌙</span>
+      <span id="themeLabel">Dark</span>
+    </button>
   </header>
 
   <main>
     <!-- Environment + Controls -->
     <section class="card" id="env-card">
-      <canvas id="grid" width="400" height="400"></canvas>
-      <div id="controls">
-        <button id="nextActionBtn">Next Action (Agent Move)</button>
-        <button id="resetBtn">Reset Agent</button>
+      <div id="canvas-wrapper">
+        <canvas id="grid"></canvas>
+      </div>
 
-        <div id="rewardButtons">
-          <button class="reward-bad" data-reward="-1">👎 -1</button>
-          <button class="reward-neutral" data-reward="0">😐 0</button>
-          <button class="reward-good" data-reward="1">👍 +1</button>
+      <div id="controls">
+        <div class="button-row">
+          <button id="nextActionBtn">Next Action (Agent Move)</button>
+          <button id="resetBtn">Reset Agent</button>
+        </div>
+
+        <div class="button-row" id="rewardButtons">
+          <button class="reward-bad" data-reward="-1">👎 <span>-1</span></button>
+          <button class="reward-neutral" data-reward="0">😐 <span>0</span></button>
+          <button class="reward-good" data-reward="1">👍 <span>+1</span></button>
         </div>
 
         <div id="status"></div>
       </div>
     </section>
 
-    <!-- Parameters + Q-values -->
-    <section class="card" id="params-card">
-      <h2 style="margin-top:0;font-size:1rem;">Learning Parameters</h2>
+    <!-- Right side: parameters + info -->
+    <div class="cards-right">
+      <section class="card" id="params-card">
+        <h2>Learning Parameters</h2>
 
-      <label>
-        Grid Size (N x N)
-        <span id="gridSizeLabel">5</span>
-      </label>
-      <input type="range" id="gridSize" min="3" max="8" value="5" />
+        <label>
+          Grid Size (N × N)
+          <span id="gridSizeLabel">5</span>
+        </label>
+        <input type="range" id="gridSize" min="3" max="8" value="5" />
 
-      <label>
-        Alpha (learning rate)
-        <input type="number" id="alphaInput" step="0.01" min="0" max="1" value="0.2" />
-      </label>
+        <label>
+          Alpha (learning rate)
+          <input type="number" id="alphaInput" step="0.01" min="0" max="1" value="0.2" />
+        </label>
 
-      <label>
-        Gamma (discount)
-        <input type="number" id="gammaInput" step="0.01" min="0" max="1" value="0.9" />
-      </label>
+        <label>
+          Gamma (discount)
+          <input type="number" id="gammaInput" step="0.01" min="0" max="1" value="0.9" />
+        </label>
 
-      <label>
-        Epsilon (exploration)
-        <input type="number" id="epsilonInput" step="0.01" min="0" max="1" value="0.2" />
-      </label>
+        <label>
+          Epsilon (exploration)
+          <input type="number" id="epsilonInput" step="0.01" min="0" max="1" value="0.2" />
+        </label>
 
-      <div style="margin-top:8px;font-size:0.85rem;">
-        <strong>Q-values for current state</strong>
-        <div id="q-values"></div>
-      </div>
-    </section>
+        <div style="margin-top:8px;font-size:0.85rem;">
+          <strong style="font-size:0.82rem;color:var(--text);">Q-values for current state</strong>
+          <div id="q-values"></div>
+        </div>
+      </section>
 
-    <!-- Explanation -->
-    <section class="card" id="info-card">
-      <h2 style="margin-top:0;font-size:1rem;">How it works</h2>
-      <ol>
-        <li>Click <strong>Next Action</strong>.<br>
+      <section class="card" id="info-card">
+        <h2>How it works</h2>
+        <ol>
+          <li>
+            Click <strong>Next Action</strong>.<br>
             The agent chooses an action with ε-greedy Q-learning and moves in the grid.
-        </li>
-        <li>Look at the move and click a reward:
-          <ul>
-            <li>👎 <code>-1</code> = bad move</li>
-            <li>😐 <code>0</code> = neutral</li>
-            <li>👍 <code>+1</code> = good move</li>
-          </ul>
-        </li>
-        <li>The Q-table is updated with your reward. Over time, the agent learns what
-            <em>you</em> consider good or bad.</li>
-      </ol>
+          </li>
+          <li>
+            Look at the move and click a reward:
+            <ul>
+              <li>👎 <code>-1</code> = bad move</li>
+              <li>😐 <code>0</code> = neutral</li>
+              <li>👍 <code>+1</code> = good move</li>
+            </ul>
+          </li>
+          <li>
+            The Q-table is updated with <em>your</em> reward. Over time, the agent learns what
+            you consider good or bad.
+          </li>
+        </ol>
 
-      <p>
-        This is a simple example of <strong>human-in-the-loop reinforcement learning</strong>,
-        where the reward signal comes from the user instead of the environment.
-      </p>
-    </section>
+        <p>
+          This is a simple example of <strong>human-in-the-loop reinforcement learning</strong>,
+          where the reward signal comes from the user instead of being hard-coded in the environment.
+        </p>
+      </section>
+    </div>
   </main>
 
   <footer>
-    Drop this file in a GitHub repo and enable GitHub Pages to run it in the browser.
+    Single <code>index.html</code>. Drop into a GitHub repo and enable GitHub Pages to run it.
   </footer>
 
   <script>
+    // ==========================
+    // Theme handling (dark / light)
+    // ==========================
+    const root = document.documentElement;
+    const themeToggleBtn = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "light") {
+        themeIcon.textContent = "☀️";
+        themeLabel.textContent = "Light";
+      } else {
+        themeIcon.textContent = "🌙";
+        themeLabel.textContent = "Dark";
+      }
+      localStorage.setItem("humanRewardRLTheme", theme);
+    }
+
+    // Initial theme from localStorage or system
+    (function initTheme() {
+      const stored = localStorage.getItem("humanRewardRLTheme");
+      if (stored === "light" || stored === "dark") {
+        applyTheme(stored);
+      } else {
+        const prefersDark = window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        applyTheme(prefersDark ? "dark" : "light");
+      }
+    })();
+
+    themeToggleBtn.addEventListener("click", () => {
+      const current = document.body.getAttribute("data-theme") || "dark";
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+
     // ==========================
     // Environment + RL Settings
     // ==========================
@@ -276,37 +524,43 @@
     const gammaInput = document.getElementById("gammaInput");
     const epsilonInput = document.getElementById("epsilonInput");
 
-    let N = parseInt(gridSizeSlider.value, 10);    // Grid is N x N
-    let cellSize = canvas.width / N;
+    let N = parseInt(gridSizeSlider.value, 10); // Grid is N x N
+    let cellSize = 0;
 
-    // Agent state (x, y)
     let state = { x: 0, y: 0 };
     const numActions = 4; // 0: up, 1: right, 2: down, 3: left
-
-    // Q-table: Q[stateIndex][action] = value
     let Q;
 
-    // Last (s, a) waiting for reward
     let waitingForReward = false;
     let lastStateIndex = null;
     let lastAction = null;
 
-    // RL hyperparameters
-    function getAlpha() { return parseFloat(alphaInput.value); }
-    function getGamma() { return parseFloat(gammaInput.value); }
-    function getEpsilon() { return parseFloat(epsilonInput.value); }
+    function getAlpha() { return parseFloat(alphaInput.value) || 0.2; }
+    function getGamma() { return parseFloat(gammaInput.value) || 0.9; }
+    function getEpsilon() { return parseFloat(epsilonInput.value) || 0.2; }
+
+    // ==========================
+    // Responsive canvas
+    // ==========================
+    function resizeCanvas() {
+      const wrapper = document.getElementById("canvas-wrapper");
+      const rect = wrapper.getBoundingClientRect();
+      const size = Math.min(rect.width - 4, 500); // limit max size
+      canvas.width = size;
+      canvas.height = size;
+      cellSize = canvas.width / N;
+      render();
+    }
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+    });
 
     // ==========================
     // Helper functions
     // ==========================
     function stateToIndex(s) {
       return s.y * N + s.x;
-    }
-
-    function indexToState(idx) {
-      const y = Math.floor(idx / N);
-      const x = idx % N;
-      return { x, y };
     }
 
     function initQTable() {
@@ -336,7 +590,7 @@
 
       // Draw grid
       ctx.lineWidth = 1;
-      ctx.strokeStyle = "#e5e7eb";
+      ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue("--grid-line");
       for (let i = 0; i <= N; i++) {
         // vertical
         ctx.beginPath();
@@ -351,16 +605,19 @@
         ctx.stroke();
       }
 
-      // Draw agent as a filled circle
-      const padding = cellSize * 0.15;
+      // Draw agent
+      const padding = cellSize * 0.18;
       const cx = state.x * cellSize + cellSize / 2;
       const cy = state.y * cellSize + cellSize / 2;
       const radius = (cellSize / 2) - padding;
 
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.fillStyle = "#2563eb";
+      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue("--accent") || "#3b82f6";
+      ctx.shadowColor = "rgba(59,130,246,0.8)";
+      ctx.shadowBlur = 10;
       ctx.fill();
+      ctx.shadowBlur = 0;
     }
 
     function updateQValuesDisplay() {
@@ -375,14 +632,11 @@
       qValuesEl.innerHTML = html;
     }
 
-    // Epsilon-greedy action selection
     function chooseAction(sIdx) {
       const eps = getEpsilon();
       if (Math.random() < eps) {
-        // Explore
         return Math.floor(Math.random() * numActions);
       } else {
-        // Exploit
         const qs = Q[sIdx];
         let bestA = 0;
         let bestQ = qs[0];
@@ -397,19 +651,16 @@
     }
 
     function stepEnvironment(action) {
-      // Copy state
       let { x, y } = state;
 
       if (action === 0 && y > 0) y--;           // up
       else if (action === 1 && x < N - 1) x++;  // right
       else if (action === 2 && y < N - 1) y++;  // down
       else if (action === 3 && x > 0) x--;      // left
-      // otherwise hit wall and stay
 
       state = { x, y };
     }
 
-    // Q-learning update using human reward
     function applyReward(reward) {
       if (!waitingForReward || lastStateIndex === null || lastAction === null) {
         setStatus("No action waiting for reward. Click 'Next Action' first.");
@@ -434,7 +685,7 @@
 
       render();
       updateQValuesDisplay();
-      setStatus(`Applied reward ${reward.toFixed(2)}. Q updated. Now click 'Next Action' again.`);
+      setStatus(`Applied reward ${reward.toFixed(2)}. Q updated. Click 'Next Action' again.`);
     }
 
     // ==========================
@@ -449,11 +700,9 @@
       const sIdx = stateToIndex(state);
       const action = chooseAction(sIdx);
 
-      // Store (s, a) to update after reward
       lastStateIndex = sIdx;
       lastAction = action;
 
-      // Step environment
       stepEnvironment(action);
       render();
       updateQValuesDisplay();
@@ -477,13 +726,12 @@
     gridSizeSlider.addEventListener("input", () => {
       N = parseInt(gridSizeSlider.value, 10);
       gridSizeLabel.textContent = N.toString();
-      cellSize = canvas.width / N;
       initQTable();
+      resizeCanvas();
       resetAgent();
-      setStatus(`Grid size changed to ${N} x ${N}. Q-table reinitialized.`);
+      setStatus(`Grid size changed to ${N} × ${N}. Q-table reinitialized.`);
     });
 
-    // When alpha/gamma/epsilon change, just update status (no need to reset Q)
     [alphaInput, gammaInput, epsilonInput].forEach(input => {
       input.addEventListener("change", () => {
         setStatus(`Updated parameters: α=${getAlpha()}, γ=${getGamma()}, ε=${getEpsilon()}.`);
@@ -494,6 +742,7 @@
     // Initial setup
     // ==========================
     initQTable();
+    resizeCanvas();
     resetAgent();
     setStatus("Ready. Click 'Next Action' and then give a reward.");
   </script>
