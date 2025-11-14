@@ -1,1 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reinforcement Learning 101 – Human-Reward Q-Learning Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020617;
+      --card-bg: #020617;
+      --card-border: #1f2937;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59,130,246,0.2);
+      --shadow: 0 18px 40px rgba(15,23,42,0.9);
+      --card-radius: 14px;
+      --transition-fast: 0.2s ease;
+    }
 
+    [data-theme="light"] {
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --card-border: #e5e7eb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: rgba(37,99,235,0.12);
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 12px 16px 8px;
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.6vw, 1.8rem);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    main {
+      padding: 0 16px 10px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(148,163,184,0.08), var(--card-bg));
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 6px;
+      font-size: 0.98rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .card h3 {
+      margin-top: 10px;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    p {
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+      margin: 4px 0 8px;
+    }
+
+    ul {
+      margin: 4px 0 8px;
+      padding-left: 1.2rem;
+      color: var(--text-muted);
+      font-size: 0.86rem;
+    }
+
+    li { margin-bottom: 3px; }
+
+    code {
+      background: rgba(15,23,42,0.6);
+      border-radius: 4px;
+      padding: 0 4px;
+      font-size: 0.8rem;
+    }
+
+    pre {
+      background: rgba(15,23,42,0.7);
+      border-radius: 8px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      color: #e5e7eb;
+      border: 1px solid var(--card-border);
+    }
+
+    footer {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      padding: 6px 16px 12px;
+      width: 100%;
+      max-width: 1100px;
+      text-align: right;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    button,
+    .header-link-btn {
+      padding: 7px 13px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 0.86rem;
+      font-weight: 500;
+      background: transparent;
+      color: var(--text);
+      transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), color var(--transition-fast);
+    }
+
+    button:active { transform: scale(0.97); }
+
+    #themeToggle {
+      border-color: var(--accent-soft);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-inline: 10px;
+      white-space: nowrap;
+    }
+
+    #themeToggle span { font-size: 0.78rem; }
+
+    .header-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      border-color: var(--accent-soft);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .header-link-btn:hover {
+      background: rgba(15,23,42,1);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      border: 1px solid var(--accent-soft);
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      background: rgba(15,23,42,0.8);
+    }
+
+    .pill span.emoji { font-size: 0.9rem; }
+
+    @media (max-width: 800px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      footer { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-block">
+      <h1>Reinforcement Learning 101</h1>
+      <div class="subtitle">
+        Short, friendly overview of RL and algorithms like Q-learning, PPO and SAC.
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" class="header-link-btn">
+        <span>←</span><span>Back to demo</span>
+      </a>
+      <button id="themeToggle" type="button">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel">Dark</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="pill"><span class="emoji">🤖</span><span>What is Reinforcement Learning?</span></div>
+      <h2>Core idea</h2>
+      <p>
+        In <strong>Reinforcement Learning (RL)</strong>, an <em>agent</em> interacts with an
+        <em>environment</em>. At each time step it:
+      </p>
+      <ul>
+        <li>observes the <strong>state</strong> <code>s</code></li>
+        <li>chooses an <strong>action</strong> <code>a</code></li>
+        <li>receives a <strong>reward</strong> <code>r</code> and a new state <code>s'</code></li>
+      </ul>
+      <p>
+        The goal: learn a <strong>policy</strong> (a way of choosing actions) that maximizes
+        the <em>long-term reward</em>.
+      </p>
+      <p>Key pieces of the RL puzzle:</p>
+      <ul>
+        <li><strong>State</strong> – what the agent currently sees.</li>
+        <li><strong>Action</strong> – what the agent can do.</li>
+        <li><strong>Reward</strong> – scalar signal of “how good was that?”.</li>
+        <li><strong>Policy</strong> – mapping from states to actions.</li>
+        <li><strong>Value</strong> – how good it is to be in a state (or take an action) in the long run.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="pill"><span class="emoji">🧮</span><span>Value-based RL</span></div>
+      <h2>Q-learning (what the demo uses)</h2>
+      <p>
+        <strong>Q-learning</strong> learns a table or function
+        <code>Q(s,a)</code> = “expected future reward if I take action
+        <code>a</code> in state <code>s</code> and act well afterwards”.
+      </p>
+      <p>The classic update rule is:</p>
+      <pre>
+Q(s, a) ← Q(s, a) + α · [ r + γ · max<sub>a'</sub> Q(s', a') − Q(s, a) ]</pre>
+      <p>
+        In the Human-Reward Q-Learning demo:
+      </p>
+      <ul>
+        <li>Each cell of the grid is a <strong>state</strong>.</li>
+        <li>Actions are <code>up, right, down, left</code>.</li>
+        <li><strong>You</strong> choose the reward (<code>-1</code>, <code>0</code>, <code>+1</code>).</li>
+        <li>The Q-table is updated based on your feedback.</li>
+      </ul>
+      <p>
+        The agent explores with an <strong>ε-greedy</strong> policy: most of the time it chooses
+        the action with highest Q-value, but with probability <code>ε</code> it picks a random action
+        to keep exploring.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="pill"><span class="emoji">🎯</span><span>Policy-gradient and Actor-Critic</span></div>
+      <h2>From tables to neural networks</h2>
+      <p>
+        For large or continuous state spaces (e.g. images, robots), we can’t store a Q-value
+        for every state–action pair. Instead we use <strong>neural networks</strong>.
+      </p>
+      <h3>Policy-gradient</h3>
+      <p>
+        A policy network <code>π<sub>θ</sub>(a | s)</code> outputs a distribution over actions.
+        We directly adjust the parameters <code>θ</code> to increase expected reward:
+      </p>
+      <pre>
+θ ← θ + α · ∇<sub>θ</sub> E[ return ]</pre>
+      <p>
+        This approach naturally handles <strong>continuous actions</strong> (e.g. torques for a robot arm).
+      </p>
+      <h3>Actor-Critic</h3>
+      <p>
+        Actor-Critic methods combine:
+      </p>
+      <ul>
+        <li>an <strong>actor</strong> (policy network) – decides actions</li>
+        <li>a <strong>critic</strong> (value network) – estimates how good states/actions are</li>
+      </ul>
+      <p>
+        The critic helps the actor learn more stable updates by providing a better estimate of
+        “how good was that trajectory?” than raw returns.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="pill"><span class="emoji">🚀</span><span>Popular modern algorithms</span></div>
+      <h2>PPO – Proximal Policy Optimization</h2>
+      <p>
+        <strong>PPO</strong> is a widely used on-policy actor-critic method.
+        It tries to improve the policy while keeping each update
+        <em>close</em> to the old policy so learning stays stable.
+      </p>
+      <ul>
+        <li>Uses a <strong>clipped loss</strong> to prevent too-big policy updates.</li>
+        <li>Good default choice for many continuous-control tasks.</li>
+        <li>Often used in robotics and game AI.</li>
+      </ul>
+
+      <h2>SAC – Soft Actor-Critic</h2>
+      <p>
+        <strong>SAC</strong> is an off-policy actor-critic algorithm that adds an
+        <strong>entropy bonus</strong> to the objective:
+      </p>
+      <ul>
+        <li>Maximize reward <em>and</em> keep the policy “high-entropy” (more random).</li>
+        <li>This encourages exploration and often gives very stable learning.</li>
+        <li>Works very well for continuous actions (e.g. MuJoCo robots).</li>
+      </ul>
+      <p>
+        In many modern robotic control setups you’ll see SAC or PPO as the main baseline.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="pill"><span class="emoji">🧑‍💻</span><span>Where this demo fits</span></div>
+      <h2>Human-reward Q-learning</h2>
+      <p>
+        The “Human-Reward Q-Learning Demo” is intentionally tiny:
+      </p>
+      <ul>
+        <li>Small discrete gridworld.</li>
+        <li>Tabular Q-learning instead of neural networks.</li>
+        <li>The reward is not hard-coded — <strong>you provide it interactively</strong>.</li>
+      </ul>
+      <p>
+        But the structure is the same idea as in bigger systems:
+      </p>
+      <ul>
+        <li>state → action → reward → update the policy/value function</li>
+        <li>repeat many times → the agent’s behavior improves</li>
+      </ul>
+      <p>
+        You can think of complex algorithms like PPO or SAC as
+        “much smarter, GPU-powered versions” of this little loop, usually with:
+      </p>
+      <ul>
+        <li>vector states (images, sensor data, joint positions)</li>
+        <li>continuous actions (forces, torques)</li>
+        <li>neural networks instead of a simple Q-table</li>
+      </ul>
+      <p>
+        Your demo is a great way to make that learning loop visible and interactive.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    Made by
+    <a href="https://github.com/jonaidshianifar" target="_blank" rel="noopener noreferrer">
+      Jonaid Shianifar
+    </a>.
+  </footer>
+
+  <script>
+    // Theme handling (same behaviour as index.html)
+    const themeToggleBtn = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    function applyTheme(theme) {
+      document.body.setAttribute("data-theme", theme);
+      if (theme === "light") {
+        themeIcon.textContent = "☀️";
+        themeLabel.textContent = "Light";
+      } else {
+        themeIcon.textContent = "🌙";
+        themeLabel.textContent = "Dark";
+      }
+      localStorage.setItem("humanRewardRLTheme", theme);
+    }
+
+    (function initTheme() {
+      const stored = localStorage.getItem("humanRewardRLTheme");
+      if (stored === "light" || stored === "dark") {
+        applyTheme(stored);
+      } else {
+        const prefersDark = window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        applyTheme(prefersDark ? "dark" : "light");
+      }
+    })();
+
+    themeToggleBtn.addEventListener("click", () => {
+      const current = document.body.getAttribute("data-theme") || "dark";
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+  </script>
+</body>
+</html>
